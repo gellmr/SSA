@@ -8,3 +8,6 @@ gcp/firebase-debug.log
 
 # Ignore the build folder and contents...
 ssa.client/obj/**
+
+# Ignore the free public pdf safety docs
+gcp/ragdocs/
