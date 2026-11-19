@@ -10,6 +10,7 @@ function App() {
   const sampleQuestions = [
     "What are the rules and permits required for entering a confined space?",
     "What first aid equipment is required in a workplace?",
+    "What is the most important factor when assessing risk?",
     "How to manage noise hazards and prevent hearing loss at work?",
     "What are the requirements for managing risks of falls at workplaces?"
   ];
