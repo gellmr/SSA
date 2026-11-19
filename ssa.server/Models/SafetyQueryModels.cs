@@ -10,6 +10,7 @@ namespace ssa.server.Models
         public string DocumentTitle { get; set; } = string.Empty;
         public string Snippet { get; set; } = string.Empty;
         public string Uri { get; set; } = string.Empty;
+        public string DocUrl { get; set; } = string.Empty;
     }
 
     public class SafetyQueryResponse
@@ -20,3 +21,4 @@ namespace ssa.server.Models
         public string EngineId { get; set; } = string.Empty;
     }
 }
+

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Markdown from 'react-markdown';
 
 function App() {
   const [query, setQuery] = useState('');
@@ -93,9 +94,9 @@ function App() {
           <div>
             <div style={{ padding: '1.25rem', backgroundColor: '#e8f0fe', borderRadius: '8px', borderLeft: '4px solid #1a73e8', marginBottom: '1.5rem' }}>
               <h3 style={{ margin: '0 0 0.75rem 0', color: '#185abc' }}>Safety Guidance Response</h3>
-              <p style={{ margin: 0, whiteSpace: 'pre-wrap', lineHeight: '1.6', color: '#202124' }}>
-                {result.answer}
-              </p>
+              <div style={{ margin: 0, lineHeight: '1.6', color: '#202124' }}>
+                <Markdown>{result.answer}</Markdown>
+              </div>
             </div>
 
             {result.citations && result.citations.length > 0 && (
@@ -104,11 +105,22 @@ function App() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                   {result.citations.map((cit, idx) => (
                     <div key={idx} style={{ padding: '0.85rem', border: '1px solid #e8eaed', borderRadius: '8px', backgroundColor: '#f8f9fa' }}>
-                      <div style={{ fontWeight: '600', color: '#1a73e8', fontSize: '0.9rem', marginBottom: '0.25rem' }}>
-                        📄 {cit.documentTitle || 'SafeWork Australia Code of Practice'}
-                      </div>
+                      {cit.docUrl ? (
+                        <a
+                          href={cit.docUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ fontWeight: '600', color: '#1a73e8', fontSize: '0.95rem', textDecoration: 'none' }}
+                        >
+                          📄 {cit.documentTitle || 'SafeWork Australia Code of Practice'} ↗
+                        </a>
+                      ) : (
+                        <div style={{ fontWeight: '600', color: '#1a73e8', fontSize: '0.9rem', marginBottom: '0.25rem' }}>
+                          📄 {cit.documentTitle || 'SafeWork Australia Code of Practice'}
+                        </div>
+                      )}
                       {cit.snippet && (
-                        <p style={{ margin: 0, fontSize: '0.85rem', color: '#5f6368', lineHeight: '1.4' }}>
+                        <p style={{ margin: '0.3rem 0 0 0', fontSize: '0.85rem', color: '#5f6368', lineHeight: '1.4' }}>
                           "{cit.snippet}"
                         </p>
                       )}

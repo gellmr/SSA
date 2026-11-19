@@ -150,7 +150,10 @@ function Provision-VertexRag {
             displayName        = "SSA Safety Engine"
             solutionType       = "SOLUTION_TYPE_SEARCH"
             dataStoreIds       = @($activeDsId)
-            searchEngineConfig = @{ searchTier = "SEARCH_TIER_STANDARD" }
+            searchEngineConfig = @{
+                searchTier   = "SEARCH_TIER_ENTERPRISE"
+                searchAddOns = @("SEARCH_ADD_ON_LLM")
+            }
         } | ConvertTo-Json -Depth 5
 
         $null = Invoke-RestMethod -Uri $createEngUrl -Method Post -Headers $headers -ContentType "application/json" -Body $engBody
@@ -319,7 +322,8 @@ if ($Up) {
     }
 
     if (![string]::IsNullOrWhiteSpace($projectNum)) {
-        Write-Host "Granting Storage Object Viewer permission to Discovery Engine Service Agent..."
+        Write-Host "Granting Storage Object Viewer permission to allUsers & Discovery Engine Service Agent..."
+        & cmd /c "gcloud storage buckets add-iam-policy-binding gs://$BucketName --member=allUsers --role=roles/storage.objectViewer 2>NUL" | Out-Null
         & cmd /c "gcloud storage buckets add-iam-policy-binding gs://$BucketName --member=serviceAccount:service-$projectNum@gcp-sa-discoveryengine.iam.gserviceaccount.com --role=roles/storage.objectViewer 2>NUL" | Out-Null
     }
 

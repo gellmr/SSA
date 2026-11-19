@@ -109,7 +109,8 @@ if ($LASTEXITCODE -ne 0) {
 
 $projectNum = (& cmd /c "gcloud projects describe $ProjectId --format=value(projectNumber) 2>NUL").Trim()
 if (![string]::IsNullOrWhiteSpace($projectNum)) {
-    Write-Host "Granting Storage Object Viewer permission to Discovery Engine Service Agent..."
+    Write-Host "Granting Storage Object Viewer permission to allUsers & Discovery Engine Service Agent..."
+    & cmd /c "gcloud storage buckets add-iam-policy-binding gs://$BucketName --member=allUsers --role=roles/storage.objectViewer 2>NUL" | Out-Null
     & cmd /c "gcloud storage buckets add-iam-policy-binding gs://$BucketName --member=serviceAccount:service-$projectNum@gcp-sa-discoveryengine.iam.gserviceaccount.com --role=roles/storage.objectViewer 2>NUL" | Out-Null
 }
 
@@ -154,8 +155,13 @@ if (-not $activeDsId) {
         displayName      = "SSA Safety DataStore"
         industryVertical = "GENERIC"
         solutionTypes    = @("SOLUTION_TYPE_SEARCH")
-        contentConfig    = "NO_CONTENT"
-    } | ConvertTo-Json
+        contentConfig    = "CONTENT_REQUIRED"
+        documentProcessingConfig = @{
+            defaultParsingConfig = @{
+                digitalParsingConfig = @{}
+            }
+        }
+    } | ConvertTo-Json -Depth 5
     $null = Invoke-RestMethod -Uri $createDsUrl -Method Post -Headers $headers -ContentType "application/json" -Body $dsBody
 }
 
@@ -194,13 +200,18 @@ Write-Host "Importing active documents into Data Store '$activeDsId'..."
 $importUrl = "https://discoveryengine.googleapis.com/v1/projects/$ProjectId/locations/global/collections/default_collection/dataStores/$activeDsId/branches/0/documents:import"
 $importBody = @{
     gcsSource          = @{
-        inputUris  = @("gs://$BucketName/metadata.jsonl")
-        dataSchema = "custom"
+        inputUris  = @("gs://$BucketName/*.pdf")
+        dataSchema = "content"
     }
     reconciliationMode = "FULL"
 } | ConvertTo-Json -Depth 5
 
-$null = Invoke-RestMethod -Uri $importUrl -Method Post -Headers $headers -ContentType "application/json" -Body $importBody
+try {
+    $null = Invoke-RestMethod -Uri $importUrl -Method Post -Headers $headers -ContentType "application/json" -Body $importBody
+    Write-Host "Document import operation initiated successfully." -ForegroundColor Green
+} catch {
+    Write-Host "Document import notice: Document import is already in progress on DataStore '$activeDsId'." -ForegroundColor Yellow
+}
 
 Write-Host ""
 Write-Host "==========================================================" -ForegroundColor Green

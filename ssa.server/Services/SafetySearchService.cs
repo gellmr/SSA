@@ -56,16 +56,21 @@ namespace ssa.server.Services
                 var reqBody = new
                 {
                     query = query,
-                    pageSize = 5,
+                    pageSize = 15,
                     contentSearchSpec = new
                     {
                         summarySpec = new
                         {
-                            summaryResultCount = 5,
+                            summaryResultCount = 10,
                             includeCitations = true,
-                            ignoreAdversarialQuery = true
+                            ignoreAdversarialQuery = true,
+                            modelPromptSpec = new
+                            {
+                                preamble = "You are an official Australian Workplace Safety Assistant. Provide a detailed, comprehensive, and exhaustive answer. Do not omit any relevant findings."
+                            }
                         },
-                        snippetSpec = new { maxSnippetCount = 3 }
+                        snippetSpec = new { maxSnippetCount = 5 },
+                        extractiveContentSpec = new { maxExtractiveAnswerCount = 5 }
                     }
                 };
 
@@ -137,9 +142,40 @@ namespace ssa.server.Services
                         }
 
                         string cleanSnip = CleanHtml(snipText);
-                        if (!string.IsNullOrEmpty(title) || !string.IsNullOrEmpty(cleanSnip))
+                        string pageNum = "";
+
+                        if (structProp.TryGetProperty("extractive_answers", out var extAnswers) && extAnswers.ValueKind == JsonValueKind.Array)
                         {
-                            res.Citations.Add(new SafetyCitation { DocumentTitle = title, Snippet = cleanSnip, Uri = uri });
+                            foreach (var ext in extAnswers.EnumerateArray())
+                            {
+                                if (ext.TryGetProperty("pageNumber", out var pNum))
+                                {
+                                    pageNum = pNum.GetString() ?? "";
+                                    if (!string.IsNullOrEmpty(pageNum)) break;
+                                }
+                            }
+                        }
+
+                        if (string.IsNullOrEmpty(pageNum) && structProp.TryGetProperty("extractive_segments", out var extSegs) && extSegs.ValueKind == JsonValueKind.Array)
+                        {
+                            foreach (var seg in extSegs.EnumerateArray())
+                            {
+                                if (seg.TryGetProperty("pageNumber", out var pNum))
+                                {
+                                    pageNum = pNum.GetString() ?? "";
+                                    if (!string.IsNullOrEmpty(pageNum)) break;
+                                }
+                            }
+                        }
+
+                        string fileName = System.IO.Path.GetFileName(uri);
+                        string pageFragment = !string.IsNullOrEmpty(pageNum) ? $"#page={pageNum}" : (!string.IsNullOrWhiteSpace(res.Query) ? "#search=" + Uri.EscapeDataString(res.Query) : "");
+                        string docUrl = !string.IsNullOrEmpty(fileName) ? $"/api/safety/docs/{fileName}{pageFragment}" : "";
+                        string displayTitle = !string.IsNullOrEmpty(pageNum) && !title.EndsWith($"(Page {pageNum})") ? $"{title} (Page {pageNum})" : title;
+
+                        if (!string.IsNullOrEmpty(displayTitle) || !string.IsNullOrEmpty(cleanSnip))
+                        {
+                            res.Citations.Add(new SafetyCitation { DocumentTitle = displayTitle, Snippet = cleanSnip, Uri = uri, DocUrl = docUrl });
                         }
                         if (!string.IsNullOrEmpty(cleanSnip)) snippets.Add(cleanSnip);
                     }
@@ -202,6 +238,20 @@ namespace ssa.server.Services
             return null;
         }
 
-        private static string CleanHtml(string text) => string.IsNullOrEmpty(text) ? "" : System.Text.RegularExpressions.Regex.Replace(text, "<.*?>", string.Empty);
+        // This method is for React JSX plain-text rendering ({cit.snippet}), which escapes < and > characters.
+        // Do NOT use this method with dangerouslySetInnerHTML as there would be no protection.
+        private static string CleanHtml(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return string.Empty;
+            
+            // 1. Decode HTML entities (&nbsp; -> space, &amp; -> &, &quot; -> ", etc.)
+            var decoded = System.Net.WebUtility.HtmlDecode(text);
+            
+            // 2. Strip HTML tags (like <b> or <span>)
+            var stripped = System.Text.RegularExpressions.Regex.Replace(decoded, "<.*?>", string.Empty);
+            
+            // 3. Normalize multiple whitespace characters
+            return System.Text.RegularExpressions.Regex.Replace(stripped, @"\s+", " ").Trim();
+        }
     }
 }
