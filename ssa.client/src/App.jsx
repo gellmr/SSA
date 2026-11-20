@@ -1,18 +1,25 @@
 import { useState } from 'react';
 import Markdown from 'react-markdown';
+import styles from './App.module.css';
+import 'bootstrap-icons/font/bootstrap-icons.css';
 
 function App() {
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
+  const [isOpen, setIsOpen] = useState(true);
+
 
   const sampleQuestions = [
-    "What are the rules and permits required for entering a confined space?",
+    "How do I reduce noise and prevent hearing loss?",
+    "What are the rules about danger of falling?",
     "What first aid equipment is required in a workplace?",
-    "What is the most important factor when assessing risk?",
-    "How to manage noise hazards and prevent hearing loss at work?",
-    "What are the requirements for managing risks of falls at workplaces?"
+    "What are the rules and permits required for entering a confined space?",
+    "What precautions are needed before working near electrical equipment?",
+    "Does SafeWork mandate sunscreen?",
+    "What is considered a hazardous task?",
+    "What is the most important factor when assessing risk?"
   ];
 
   const handleAsk = async (questionToAsk) => {
@@ -22,6 +29,7 @@ function App() {
     setLoading(true);
     setError('');
     setResult(null);
+    setIsOpen(false);
 
     try {
       const res = await fetch('/api/safety/ask', {
@@ -41,41 +49,78 @@ function App() {
   };
 
   return (
-    <div style={{ fontFamily: 'system-ui, sans-serif', backgroundColor: '#f4f6f9', minHeight: '100vh', padding: '2rem 1rem' }}>
-      <div style={{ maxWidth: '800px', margin: '0 auto', backgroundColor: '#fff', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', padding: '2rem' }}>
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <h1 style={{ color: '#1a73e8', margin: '0 0 0.5rem 0' }}>Site Safety Assistant</h1>
-          <p style={{ color: '#5f6368', margin: 0 }}>AI-powered Workplace Safety Guidance grounded in <strong>SafeWork Australia Codes of Practice</strong></p>
+    <div className="container-fluid" style={{ fontFamily: 'system-ui, sans-serif', backgroundColor: '#f4f6f9', minHeight: '100vh', padding: '2rem 1rem' }}>
+      <div className="col-12" style={{ maxWidth: '1200px', margin: '0 auto', backgroundColor: '#fff', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', padding: '0 0 2rem 0', overflow: 'hidden' }}>
+
+        {/* Looping video header */}
+        <div>
+          <div className={styles['video-container']}>
+            <video autoPlay loop muted playsInline ref={(el) => { if (el) el.playbackRate = 0.2; }}>
+              <source src="/video-bg.mp4" type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+
+            <div className={styles['video-title-overlay']}>
+              <h1 className={styles['title-overlay']}>
+                Site Safety Assistant
+              </h1>
+            </div>
+          </div>
         </div>
 
-        <div style={{ marginBottom: '1.5rem' }}>
-          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+        <div style={{ padding: '0 2rem' }}>
+          <div className="row" style={{ textAlign: '', marginBottom: '2rem' }}>
+          <div className="col-12" style={{ color: '#5f6368' }}>
+            {/* <h1 style={{ color: '#1a73e8', margin: '0 0 0.5rem 0' }}>Site Safety Assistant</h1> */}
+            {/* <p>
+              AI-powered Workplace Safety Guidance grounded in <strong>SafeWork Australia Codes of Practice</strong>
+            </p> */}
+            <p style={{textAlign:'justify'}}>
+              This application is powered by Retrieval-Augmented Generation (RAG) and Google Cloud Vertex AI Search. It searches across 12 free public <strong>SafeWork Australia Codes of Practice</strong> PDFs (approx 662 total pages) to retrieve relevant passages and generate grounded answers, with cited source references.
+            </p>
+            <p>
+              Enter a question below to try it. Eg <span style={{padding:4, backgroundColor:'#f3f3f3', borderRadius:5}}>can I eat while working from heights</span>&nbsp;?
+            </p>
+          </div>
+        </div>
+
+        <div className="row" style={{ marginBottom: '1.5rem' }}>
+          <div className="col-12 col-md-9" style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
             <input
               type="text"
               placeholder="Ask a workplace safety question..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleAsk()}
-              style={{ flex: 1, padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #dadce0', fontSize: '1rem', outline: 'none' }}
+              style={{ width: '100%', flex: 1, padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #dadce0', fontSize: '1rem', outline: 'none' }}
             />
+          </div>
+          <div className="col-12 col-md-3">
             <button
               onClick={() => handleAsk()}
               disabled={loading || !query.trim()}
-              style={{ padding: '0.75rem 1.5rem', backgroundColor: loading ? '#9aa0a6' : '#1a73e8', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '1rem', fontWeight: '600', cursor: loading ? 'not-allowed' : 'pointer' }}
+              style={{ width: '100%', padding: '0.75rem 1.5rem', backgroundColor: loading ? '#9aa0a6' : '#1a73e8', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '1rem', fontWeight: '600', cursor: loading ? 'not-allowed' : 'pointer' }}
             >
               {loading ? 'Searching...' : 'Ask Assistant'}
             </button>
           </div>
+        </div>
 
-          <div>
-            <span style={{ fontSize: '0.85rem', color: '#5f6368', display: 'block', marginBottom: '0.5rem' }}>Sample questions:</span>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+        <div className="row">
+          <div className="col-12">
+            <button className="btn btn-light" type="button" onClick={() => setIsOpen(!isOpen)} aria-expanded={isOpen}>
+              <span className={styles['samp-span']}>Show sample questions:&nbsp;</span>
+              {isOpen ? <i class="bi bi-chevron-down"></i> : <i class="bi bi-caret-down"></i> }
+            </button>
+            {isOpen && (
+            <div className={`col-12 ${styles['sample-quest']}`}>
               {sampleQuestions.map((sq, idx) => (
-                <button key={idx} onClick={() => { setQuery(sq); handleAsk(sq); }} style={{ backgroundColor: '#e8f0fe', color: '#1967d2', border: 'none', borderRadius: '16px', padding: '0.4rem 0.8rem', fontSize: '0.85rem', cursor: 'pointer' }}>
+                <button className={styles['sample-quest']} key={idx} onClick={() => { setQuery(sq); handleAsk(sq); }}>
                   {sq}
                 </button>
               ))}
             </div>
+            )}
           </div>
         </div>
 
@@ -92,8 +137,8 @@ function App() {
         )}
 
         {result && (
-          <div>
-            <div style={{ padding: '1.25rem', backgroundColor: '#e8f0fe', borderRadius: '8px', borderLeft: '4px solid #1a73e8', marginBottom: '1.5rem' }}>
+          <div className={`row ${styles['response-blue']}`} style={{marginTop:10}}>
+            <div style={{ padding: '1.25rem', backgroundColor: '#e8f0fe', borderRadius: '8px', border: '2px solid #4892f3', marginBottom: '1.5rem' }}>
               <h3 style={{ margin: '0 0 0.75rem 0', color: '#185abc' }}>Safety Guidance Response</h3>
               <div style={{ margin: 0, lineHeight: '1.6', color: '#202124' }}>
                 <Markdown>{result.answer}</Markdown>
@@ -132,6 +177,7 @@ function App() {
             )}
           </div>
         )}
+        </div>
       </div>
     </div>
   );

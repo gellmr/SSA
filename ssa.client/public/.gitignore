@@ -1,0 +1,2 @@
+# Dont commit the video files to git.
+*.mp4

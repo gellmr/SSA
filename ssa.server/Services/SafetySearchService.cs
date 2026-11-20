@@ -114,7 +114,7 @@ namespace ssa.server.Services
 
             if (root.TryGetProperty("summary", out var sum) && sum.TryGetProperty("summaryText", out var st) && !string.IsNullOrWhiteSpace(st.GetString()))
             {
-                res.Answer = st.GetString()!;
+                res.Answer = CleanLatexMath(st.GetString()!);
             }
 
             if (root.TryGetProperty("results", out var results) && results.ValueKind == JsonValueKind.Array)
@@ -236,6 +236,21 @@ namespace ssa.server.Services
             }
             catch (Exception ex) { _logger.LogWarning(ex, "Engine discovery failed"); }
             return null;
+        }
+
+        private static string CleanLatexMath(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return string.Empty;
+
+            // Normalize LaTeX math units like $1\text{ m}^2$ -> 1 m²
+            text = System.Text.RegularExpressions.Regex.Replace(text, @"\$(\d+)?\s*\\text\{\s*m\s*\}\^2\$", "$1 m²");
+            text = System.Text.RegularExpressions.Regex.Replace(text, @"\$(\d+)?\s*\\text\{\s*m\s*\}\^3\$", "$1 m³");
+            text = System.Text.RegularExpressions.Regex.Replace(text, @"\\text\{\s*m\s*\}\^2", "m²");
+            text = System.Text.RegularExpressions.Regex.Replace(text, @"\\text\{\s*m\s*\}\^3", "m³");
+            text = System.Text.RegularExpressions.Regex.Replace(text, @"\\text\{([^}]+)\}", "$1");
+            text = System.Text.RegularExpressions.Regex.Replace(text, @"\$", "");
+
+            return text;
         }
 
         // This method is for React JSX plain-text rendering ({cit.snippet}), which escapes < and > characters.
