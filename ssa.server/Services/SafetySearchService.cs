@@ -52,6 +52,8 @@ namespace ssa.server.Services
                 }
                 res.EngineId = engineId;
 
+                // Build a query to send to google discovery engine
+
                 var url = $"https://discoveryengine.googleapis.com/v1/projects/{projId}/locations/{loc}/collections/{col}/engines/{engineId}/servingConfigs/default_search:search";
                 var reqBody = new
                 {
@@ -73,6 +75,8 @@ namespace ssa.server.Services
                         extractiveContentSpec = new { maxExtractiveAnswerCount = 5 }
                     }
                 };
+
+                // Submit the query with http client
 
                 using var req = new HttpRequestMessage(HttpMethod.Post, url);
                 req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
@@ -96,6 +100,8 @@ namespace ssa.server.Services
                     return res;
                 }
 
+                // Extract the answer and citations from response json
+                
                 ParseSearchResults(json, res);
             }
             catch (Exception ex)

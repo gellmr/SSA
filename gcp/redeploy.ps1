@@ -109,6 +109,8 @@ gcloud run deploy $ServiceName `
   --image $ImageTag `
   --region $Region `
   --allow-unauthenticated `
+  --min-instances=0 `
+  --max-instances=2 `
   --set-env-vars="GCP__ProjectId=$ProjectId,ConnectionStrings__StoreContext=$ConnectionString,Authentication__Google__ClientId=$GoogleClientId,Authentication__Google__ClientSecret=$GoogleClientSecret,RUN_MIGRATIONS=true,Authentication__VIP__Password=$VipPassword,Authentication__VIP__UserName=$VipUserName,Authentication__VIP__Email=$VipEmail,Authentication__VIP__Id=$VipId,Authentication__VIP__PasswordHash=$VipPasswordHash,Authentication__VIP__PhoneNumber=$VipPhoneNumber"
 
 if ($LASTEXITCODE -ne 0) {
